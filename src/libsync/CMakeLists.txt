@@ -64,6 +64,8 @@ set(libsync_SRCS
     utility.cpp
     ownsql.cpp
     transmissionchecksumvalidator.cpp
+    ocssharejob.cpp
+    thumbnailjob.cpp
     creds/dummycredentials.cpp
     creds/abstractcredentials.cpp
     creds/credentialscommon.cpp
