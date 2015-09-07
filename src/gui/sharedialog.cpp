@@ -31,10 +31,6 @@
 #include <QFileIconProvider>
 #include <QClipboard>
 
-namespace {
-    int SHARETYPE_PUBLIC = 3;
-}
-
 namespace OCC {
 
 ShareDialog::ShareDialog(AccountPtr account, const QString &sharePath, const QString &localPath, bool resharingAllowed, QWidget *parent) :
@@ -170,25 +166,16 @@ void ShareDialog::setExpireDate(const QDate &date)
         return;
     }
     _pi_date->startAnimation();
-    QString path  = QString("/%1").arg(_public_share_id);
-    QList<QPair<QString, QString> > postParams;
 
-    if (date.isValid()) {
-        postParams.append(qMakePair(QString::fromLatin1("expireDate"), date.toString("yyyy-MM-dd")));
-    } else {
-        postParams.append(qMakePair(QString::fromLatin1("expireDate"), QString()));
-    }
-
-    OcsShareJob *job = new OcsShareJob("PUT", path, _account, this);
-    job->setPostParams(postParams);
+    OcsShareJob *job = new OcsShareJob(_public_share_id, _account, this);
     connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotExpireSet(QVariantMap)));
-    job->start();
+    job->setExpireDate(date);
 }
 
 void ShareDialog::slotExpireSet(const QVariantMap &reply)
 {
     QString message;
-    int code = OcsShareJob::getJsonReturnCode(reply, message);
+    int code = OCSJob::getJsonReturnCode(reply, message);
     if (code != 100) {
         displayError(code);
     } 
@@ -233,32 +220,21 @@ void ShareDialog::setPassword(const QString &password)
     QByteArray verb("PUT");
 
     if( _public_share_id > 0 ) {
-        path = QString("/%1").arg(_public_share_id);
-        requestParams.append(qMakePair(QString::fromLatin1("password"), password));
+        OcsShareJob *job = new OcsShareJob(_public_share_id, _account, this);
+        connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotPasswordSet(QVariantMap)));
+        job->setPassword(password);
     } else {
-        // lets create a new share.
-        path = QString();
-        requestParams.append(qMakePair(QString::fromLatin1("path"), _sharePath));
-        requestParams.append(qMakePair(QString::fromLatin1("shareType"), QString::number(SHARETYPE_PUBLIC)));
-        requestParams.append(qMakePair(QString::fromLatin1("password"), password));
-        verb = "POST";
-
-        if( _ui->checkBox_expire->isChecked() ) {
-            QDate date = _ui->calendar->date();
-            if( date.isValid() ) {
-                requestParams.append(qMakePair(QString::fromLatin1("expireDate"), date.toString("yyyy-MM-dd")));
-            }
-        }
-    }
-    OcsShareJob *job = new OcsShareJob(verb, path, _account, this);
-    job->setPostParams(requestParams);
-    connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotPasswordSet(QVariantMap)));
-
-    if (_public_share_id == 0) {
+        OcsShareJob *job = new OcsShareJob(_public_share_id, _account, this);
+        connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotPasswordSet(QVariantMap)));
         connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotCreateShareFetched(QVariantMap)));
-    }
 
-    job->start();
+        QDate date;
+        if( _ui->checkBox_expire->isChecked() ) {
+            date = _ui->calendar->date();
+        }
+
+        job->createShare(_sharePath, OcsShareJob::SHARETYPE::LINK, password, date);
+    }
     _passwordJobRunning = true;
 }
 
@@ -282,13 +258,9 @@ void ShareDialog::slotPasswordSet(const QVariantMap &reply)
 
 void ShareDialog::getShares()
 {
-    QList<QPair<QString, QString> > params;
-    params.append(qMakePair(QString::fromLatin1("path"), _sharePath));
-    OcsShareJob *job = new OcsShareJob("GET", "", _account, this);
-    job->setGetParams(params);
-    job->addPassStatusCode(404); // don't report error if share doesn't exist yet
+    OcsShareJob *job = new OcsShareJob(_account, this);
     connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotSharesFetched(QVariantMap)));
-    job->start();
+    job->getShares(_sharePath);
 
     if (QFileInfo(_localPath).isFile()) {
         ThumbnailJob *job2 = new ThumbnailJob(_sharePath, _account, this);
@@ -317,7 +289,7 @@ void ShareDialog::slotSharesFetched(const QVariantMap &reply)
     Q_FOREACH(auto share, ShareDialog::_shares) {
         QVariantMap data = share.toMap();
 
-        if (data.value("share_type").toInt() == SHARETYPE_PUBLIC) {
+        if (data.value("share_type").toInt() == static_cast<int>(OcsShareJob::SHARETYPE::LINK)) {
             _public_share_id = data.value("id").toULongLong();
             _ui->pushButton_copy->show();
 
@@ -448,9 +420,6 @@ void ShareDialog::slotCheckBoxShareLinkClicked()
     qDebug() << Q_FUNC_INFO <<( _ui->checkBox_shareLink->checkState() == Qt::Checked);
     if (_ui->checkBox_shareLink->checkState() == Qt::Checked) {
         _pi_link->startAnimation();
-        QList<QPair<QString, QString> > postParams;
-        postParams.append(qMakePair(QString::fromLatin1("path"), _sharePath));
-        postParams.append(qMakePair(QString::fromLatin1("shareType"), QString::number(SHARETYPE_PUBLIC)));
 
         /*
          * Check the capabilities if the server requires a password for a share
@@ -469,17 +438,14 @@ void ShareDialog::slotCheckBoxShareLinkClicked()
             return;
         }
 
-        OcsShareJob *job = new OcsShareJob("POST", "", _account, this);
-        job->setPostParams(postParams);
-        job->addPassStatusCode(403); // "password required" is not an error
+        OcsShareJob *job = new OcsShareJob(_account, this);
         connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotCreateShareFetched(QVariantMap)));
-        job->start();
+        job->createShare(_sharePath, OcsShareJob::SHARETYPE::LINK);
     } else {
         _pi_link->startAnimation();
-        QString path = QString("/%1").arg(_public_share_id);
-        OcsShareJob *job = new OcsShareJob("DELETE", path, _account, this);
+        OcsShareJob *job = new OcsShareJob(_public_share_id, _account, this);
         connect(job, SIGNAL(jobFinished(QVariantMap)), this, SLOT(slotDeleteShareFetched(QVariantMap)));
-        job->start();
+        job->deleteShare();
     }
 }
 

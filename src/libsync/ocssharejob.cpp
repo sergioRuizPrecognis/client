@@ -20,89 +20,87 @@
 
 namespace OCC {
 
-OcsShareJob::OcsShareJob(const QByteArray &verb, const QString &path, AccountPtr account, QObject* parent)
-: AbstractNetworkJob(account, "", parent),
-  _verb(verb)
+OcsShareJob::OcsShareJob(AccountPtr account, QObject* parent)
+: OCSJob(account, parent)
 {
-    _passStatusCodes.append(100);
-    setIgnoreCredentialFailure(true);
-
-    _url = Account::concatUrlPath(account->url(), QString("ocs/v1.php/apps/files_sharing/api/v1/shares") + path);
+    setUrl(Account::concatUrlPath(account->url(), QString("ocs/v1.php/apps/files_sharing/api/v1/shares")));
 }
 
-void OcsShareJob::setGetParams(const QList<QPair<QString, QString> >& getParams)
+OcsShareJob::OcsShareJob(int shareId, AccountPtr account, QObject* parent)
+: OCSJob(account, parent)
 {
-    _url.setQueryItems(getParams);
+    setUrl(Account::concatUrlPath(account->url(), QString("ocs/v1.php/apps/files_sharing/api/v1/shares/%1").arg(shareId)));
 }
 
-void OcsShareJob::setPostParams(const QList<QPair<QString, QString> >& postParams)
+void OcsShareJob::getShares(const QString &path)
 {
-    _postParams = postParams;
+    setVerb("GET");
+    
+    QList<QPair<QString, QString> > getParams;
+    getParams.append(qMakePair(QString::fromLatin1("path"), path));
+    setGetParams(getParams);
+
+    addPassStatusCode(404);
+
+    start();
+
 }
 
-void OcsShareJob::addPassStatusCode(int code)
+void OcsShareJob::deleteShare()
 {
-    _passStatusCodes.append(code);
+    setVerb("DELETE");
+
+    start();
 }
 
-void OcsShareJob::start()
+void OcsShareJob::setExpireDate(const QDate &date)
 {
-    QNetworkRequest req;
-    req.setRawHeader("OCS-APIREQUEST", "true");
-    req.setRawHeader("Content-Type", "application/x-www-form-urlencoded");
+    setVerb("PUT");
 
-    // Url encode the _postParams and put them in a buffer.
-    QByteArray postData;
-    Q_FOREACH(auto tmp2, _postParams) {
-        if (! postData.isEmpty()) {
-            postData.append("&");
-        }
-        postData.append(QUrl::toPercentEncoding(tmp2.first));
-        postData.append("=");
-        postData.append(QUrl::toPercentEncoding(tmp2.second));
-    }
-    QBuffer *buffer = new QBuffer;
-    buffer->setData(postData);
+    QList<QPair<QString, QString> > postParams;
 
-    auto queryItems = _url.queryItems();
-    queryItems.append(qMakePair(QString::fromLatin1("format"), QString::fromLatin1("json")));
-    _url.setQueryItems(queryItems);
-
-    setReply(davRequest(_verb, _url, req, buffer));
-    setupConnections(reply());
-    buffer->setParent(reply());
-    AbstractNetworkJob::start();
-}
-
-bool OcsShareJob::finished()
-{
-    const QString replyData = reply()->readAll();
-
-    bool success;
-    QVariantMap json = QtJson::parse(replyData, success).toMap();
-    if (!success) {
-        qDebug() << "Could not parse reply to" << _verb << _url << _postParams
-                 << ":" << replyData;
+    if (date.isValid()) {
+        postParams.append(qMakePair(QString::fromLatin1("expireDate"), date.toString("yyyy-MM-dd")));
+    } else {
+        postParams.append(qMakePair(QString::fromLatin1("expireDate"), QString()));
     }
 
-    QString message;
-    const int statusCode = getJsonReturnCode(json, message);
-    if (!_passStatusCodes.contains(statusCode)) {
-        qDebug() << "Reply to" << _verb << _url << _postParams
-                 << "has unexpected status code:" << statusCode << replyData;
-    }
-
-    emit jobFinished(json);
-    return true;
+    setPostParams(postParams);
+    start();
 }
 
-int OcsShareJob::getJsonReturnCode(const QVariantMap &json, QString &message)
+void OcsShareJob::setPassword(const QString &password)
 {
-    //TODO proper checking
-    int code = json.value("ocs").toMap().value("meta").toMap().value("statuscode").toInt();
-    message = json.value("ocs").toMap().value("meta").toMap().value("message").toString();
+    setVerb("PUT");
 
-    return code;
+    QList<QPair<QString, QString> > postParams;
+    postParams.append(qMakePair(QString::fromLatin1("password"), password));
+
+    setPostParams(postParams);
+    start();
+}
+
+void OcsShareJob::createShare(const QString &path, SHARETYPE shareType, const QString &password, const QDate &date)
+{
+    setVerb("POST");
+
+    QList<QPair<QString, QString> > postParams;
+    postParams.append(qMakePair(QString::fromLatin1("path"), path));
+    postParams.append(qMakePair(QString::fromLatin1("shareType"), QString::number(static_cast<int>(shareType))));
+
+    if (!password.isEmpty()) {
+        postParams.append(qMakePair(QString::fromLatin1("shareType"), password));
+    }
+
+    if (date.isValid()) {
+        postParams.append(qMakePair(QString::fromLatin1("expireDate"), date.toString("yyyy-MM-dd")));
+    }
+
+    setPostParams(postParams);
+
+    addPassStatusCode(403);
+
+    start();
 }
 
 }

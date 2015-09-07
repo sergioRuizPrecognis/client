@@ -14,8 +14,7 @@
 #ifndef OCSSHAREJOB_H
 #define OCSSHAREJOB_H
 
-#include "networkjobs.h"
-#include "accountfwd.h"
+#include "ocsjob.h"
 #include <QVector>
 #include <QList>
 #include <QPair>
@@ -26,43 +25,64 @@ namespace OCC {
  * @brief The OcsShareJob class
  * @ingroup gui
  */
-class OcsShareJob : public AbstractNetworkJob {
+class OcsShareJob : public OCSJob {
     Q_OBJECT
 public:
 
     /**
-     * Create a call the OCS Share API
-     *
-     * @param verb Http verb (GET, PUT, DELETE)
-     * @param path Path relative to base url: ocs/v1.php/apps/files_sharing/api/v1/shares
-     * @param account The account to send this request to
-     * @param parent The parent object
+     * Support sharetypes
      */
-    explicit OcsShareJob(const QByteArray& verb, const QString& path, AccountPtr account, QObject* parent = 0);
+    enum class SHARETYPE : int {
+        LINK = 3
+    };
 
     /**
-     * Set the get params to the url
-     *
-     * @param getParams list of pairs to add
+     * Constructor for new shares or listing of shares
      */
-    void setGetParams(const QList<QPair<QString, QString> >& getParams);
+    explicit OcsShareJob(AccountPtr account, QObject *parent = 0);
 
-    void setPostParams(const QList<QPair<QString, QString> >& postParams);
-    void addPassStatusCode(int code);
+    /**
+     * Constructors for exisiting shares of which we know the shareId
+     */
+    explicit OcsShareJob(int shareId, AccountPtr account, QObject *parent = 0);
 
-    static int getJsonReturnCode(const QVariantMap &json, QString &message);
+    /**
+     * Get all the shares
+     *
+     * @param path Path to requests shares for (default all shares)
+     */
+    void getShares(const QString& path = "");
 
-public slots:
-    void start() Q_DECL_OVERRIDE;
-signals:
-    void jobFinished(QVariantMap reply);
-private slots:
-    virtual bool finished() Q_DECL_OVERRIDE;
-private:
-    QByteArray _verb;
-    QUrl _url;
-    QList<QPair<QString, QString> > _postParams;
-    QVector<int> _passStatusCodes;
+    /**
+     * Delete the current Share
+     */
+    void deleteShare();
+
+    /**
+     * Set the expiration date of a share
+     *
+     * @param date The expire date, if this date is invalid the expire date
+     * will be removed
+     */
+    void setExpireDate(const QDate& date);
+
+    /**
+     * Set the password of a share
+     *
+     * @param password The apssword of the share, if the password is empty the
+     * share will be removed
+     */
+    void setPassword(const QString& password);
+
+    /**
+     * Create a new share
+     *
+     * @param path The path of the file/folder to share
+     * @param shareType The type of share (user/group/link/federated)
+     * @param password Optionally a password for the share
+     * @param date Optionally an expire date for the share
+     */
+    void createShare(const QString& path, SHARETYPE shareType, const QString& password = "", const QDate& date = QDate());
 };
 
 }
