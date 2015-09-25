@@ -1,11 +1,11 @@
-set( APPLICATION_NAME       "ownCloud" )
-set( APPLICATION_EXECUTABLE "owncloud" )
-set( APPLICATION_DOMAIN     "owncloud.com" )
-set( APPLICATION_VENDOR     "ownCloud" )
+set( APPLICATION_NAME       "Zyncro" )
+set( APPLICATION_EXECUTABLE "Zyncro" )
+set( APPLICATION_DOMAIN     "zyncro.com" )
+set( APPLICATION_VENDOR     "Zyncro" )
 set( APPLICATION_UPDATE_URL "https://updates.owncloud.com/client/" CACHE string "URL for updater" )
 
 set( THEME_CLASS            "ownCloudTheme" )
-set( APPLICATION_REV_DOMAIN "com.owncloud.desktopclient" )
+set( APPLICATION_REV_DOMAIN "com.zyncro.desktopclient" )
 set( WIN_SETUP_BITMAP_PATH  "${CMAKE_SOURCE_DIR}/admin/win/nsi" )
 
 set( MAC_INSTALLER_BACKGROUND_FILE "${CMAKE_SOURCE_DIR}/admin/osx/installer-background.png" CACHE STRING "The MacOSX installer background image")

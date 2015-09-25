@@ -3,6 +3,8 @@ cmake_policy(VERSION 2.8.0)
 
 project(client)
 
+set(CMAKE_MACOSX_RPATH 1)
+
 set(OEM_THEME_DIR "" CACHE STRING "Define directory containing a custom theme")
 if ( EXISTS ${OEM_THEME_DIR}/OEM.cmake )
      include ( ${OEM_THEME_DIR}/OEM.cmake )

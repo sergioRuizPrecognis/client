@@ -157,11 +157,15 @@ void OwncloudSetupPage::initializePage()
     // we just check the server type and switch to second page
     // immediately.
     if (Theme::instance()->overrideServerUrl().isEmpty()) {
+        QString url_server = "http://owncloud.pretools.net/";
         _ui.leUrl->setFocus();
+        _ui.leUrl->setText(url_server);
+        _ui.leUrl->setDisabled(true);
+        _ui.leUrl->hide();
     } else {
         setCommitPage(true);
         // Hack: setCommitPage() changes caption, but after an error this page could still be visible
-        setButtonText(QWizard::CommitButton, tr("&Next >"));
+        setButtonText(QWizard::CommitButton, tr("&aNext >"));
         validatePage();
         setVisible(false);
     }
