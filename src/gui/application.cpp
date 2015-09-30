@@ -387,7 +387,7 @@ void Application::showHelp()
     stream << QLatin1String("File synchronisation desktop utility.") << endl << endl
            << QLatin1String(optionsC);
 
-    if (_theme->appName() == QLatin1String("ownCloud"))
+    if (_theme->appName() == QLatin1String("Zyncro"))
         stream << endl << "For more information, see http://www.owncloud.org" << endl << endl;
 
     displayHelpText(helpText);

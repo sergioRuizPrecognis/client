@@ -89,7 +89,9 @@ public:
     /** Server url of the account */
     void setUrl(const QUrl &url);
     QUrl url() const { return _url; }
-
+    /* MODIFICADO ZYNCRO */
+    QUrl urlLogin() const { return _urlLogin; }
+    /* ---- */
     /** Returns webdav entry URL, based on url() */
     QUrl davUrl() const;
 
@@ -196,6 +198,9 @@ private:
     QByteArray _pemCertificate; 
     QString _pemPrivateKey;  
     QString _davPath; // default "remote.php/webdav/";
+    /* MODIFICADO ZYNCRO */
+    QUrl _urlLogin; // default "http://owncloud.pretools.net/index.php/apps/myapp/login";
+    /* ---- */
     bool _wasMigrated;
     friend class AccountManager;
 };

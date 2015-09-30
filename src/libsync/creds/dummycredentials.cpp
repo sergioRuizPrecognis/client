@@ -39,6 +39,12 @@ QString DummyCredentials::user() const
 {
     return _user;
 }
+/* MODIFICACION ZYNCRO */
+QString DummyCredentials::password() const
+{
+    return _password;
+}
+
 
 QNetworkAccessManager* DummyCredentials::getQNAM() const
 {

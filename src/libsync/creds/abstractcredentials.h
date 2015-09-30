@@ -46,6 +46,9 @@ public:
     virtual bool changed(AbstractCredentials* credentials) const = 0;
     virtual QString authType() const = 0;
     virtual QString user() const = 0;
+    /* MODIFICACION ZYNCRO */
+    virtual QString password() const = 0;
+
     virtual QNetworkAccessManager* getQNAM() const = 0;
     virtual bool ready() const = 0;
     virtual void fetchFromKeychain() = 0;

@@ -85,7 +85,7 @@ bool AccountManager::restoreFromLegacySettings()
         QFileInfo fi( oCCfgFile );
         if( fi.isReadable() ) {
             QSettings *oCSettings = new QSettings(oCCfgFile, QSettings::IniFormat);
-            oCSettings->beginGroup(QLatin1String("ownCloud"));
+            oCSettings->beginGroup(QLatin1String("Zyncro"));
 
             // Check the theme url to see if it is the same url that the oC config was for
             QString overrideUrl = Theme::instance()->overrideServerUrl();

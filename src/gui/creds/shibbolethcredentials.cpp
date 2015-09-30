@@ -121,6 +121,11 @@ QString ShibbolethCredentials::user() const
     return _user;
 }
 
+QString ShibbolethCredentials::password() const
+{
+    return _user;
+}
+
 QNetworkAccessManager* ShibbolethCredentials::getQNAM() const
 {
     QNetworkAccessManager* qnam(new AccessManager);

@@ -41,6 +41,7 @@ Account::Account(QObject *parent)
     , _credentials(0)
     , _treatSslErrorsAsFailure(false)
     , _davPath("remote.php/webdav/")
+    , _urlLogin("http://owncloud.pretools.net/index.php/apps/myapp/login")
     , _wasMigrated(false)
 {
     qRegisterMetaType<AccountPtr>("AccountPtr");

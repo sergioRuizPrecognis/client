@@ -18,6 +18,9 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QDesktopServices>
+/* MODIFICACION ZYNCRO */
+#include <QNetworkAccessManager>
+#include <QtNetwork>
 
 #include "wizard/owncloudwizardcommon.h"
 #include "wizard/owncloudwizard.h"
@@ -198,13 +201,35 @@ void OwncloudSetupWizard::slotConnectToOCUrl( const QString& url )
 void OwncloudSetupWizard::testOwnCloudConnect()
 {
     AccountPtr account = _ocWizard->account();
-
     auto *job = new PropfindJob(account, "/", this);
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(account->urlLogin());
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    QUrl params;
+    QString user3 = account->credentials()->password();
+
+    fprintf(stderr,qPrintable(user3));
+
+    params.addQueryItem("user", account->credentials()->user());
+    params.addQueryItem("password", account->credentials()->password());
+
+    connect(manager, SIGNAL( finished(QNetworkReply*) ), this, SLOT(slotFinishedReply(QNetworkReply*)));
+    manager->post(request, params.encodedQuery());
+
     job->setIgnoreCredentialFailure(true);
     job->setProperties(QList<QByteArray>() << "getlastmodified");
     connect(job, SIGNAL(result(QVariantMap)), _ocWizard, SLOT(successfulStep()));
     connect(job, SIGNAL(finishedWithError()), this, SLOT(slotAuthError()));
     job->start();
+}
+
+void OwncloudSetupWizard::slotFinishedReply(QNetworkReply* reply)
+{
+    QByteArray bts = reply->readAll();
+    QString str(bts);
+    fprintf(stderr,qPrintable(str));
 }
 
 void OwncloudSetupWizard::slotAuthError()
@@ -354,7 +379,7 @@ void OwncloudSetupWizard::slotRemoteFolderExists(QNetworkReply *reply)
 
 void OwncloudSetupWizard::createRemoteFolder()
 {
-    _ocWizard->appendToConfigurationLog( tr("creating folder on ownCloud: %1" ).arg( _remoteFolder ));
+    _ocWizard->appendToConfigurationLog( tr("creating folder on Zyncro: %1" ).arg( _remoteFolder ));
 
     MkColJob *job = new MkColJob(_ocWizard->account(), _remoteFolder, this);
     connect(job, SIGNAL(finished(QNetworkReply::NetworkError)), SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));

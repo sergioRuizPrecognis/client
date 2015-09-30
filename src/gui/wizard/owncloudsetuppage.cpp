@@ -157,6 +157,7 @@ void OwncloudSetupPage::initializePage()
     // we just check the server type and switch to second page
     // immediately.
     if (Theme::instance()->overrideServerUrl().isEmpty()) {
+        // MODIFICATION ZYNCRO
         QString url_server = "http://owncloud.pretools.net/";
         _ui.leUrl->setFocus();
         _ui.leUrl->setText(url_server);

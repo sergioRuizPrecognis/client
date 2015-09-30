@@ -58,7 +58,7 @@ QString ConnectionValidator::statusString( Status stat )
 void ConnectionValidator::checkServerAndAuth()
 {
     if( !_account ) {
-        _errors << tr("No ownCloud account configured");
+        _errors << tr("No Zyncro account configured");
         reportResult( NotConfigured );
         return;
     }
