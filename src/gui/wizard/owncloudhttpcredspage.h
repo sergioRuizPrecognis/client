@@ -38,6 +38,11 @@ public:
 
   void initializePage() Q_DECL_OVERRIDE;
   void cleanupPage() Q_DECL_OVERRIDE;
+  /* MODIFICACION ZYNCRO */
+  void newPasswordOC( const QString& );
+  QString getUser() const;
+  QString getPassword() const;
+
   bool validatePage() Q_DECL_OVERRIDE;
   int nextId() const Q_DECL_OVERRIDE;
   void setConnected(bool connected);

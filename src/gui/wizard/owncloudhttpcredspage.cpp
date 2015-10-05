@@ -87,6 +87,22 @@ void OwncloudHttpCredsPage::cleanupPage()
     _ui.leUsername->clear();
     _ui.lePassword->clear();
 }
+/* MODIFICACION ZYNCRO */
+void OwncloudHttpCredsPage::newPasswordOC(const QString& pass)
+{
+    _ui.lePassword->setText(pass);
+}
+
+QString OwncloudHttpCredsPage::getUser() const
+{
+    return (_ui.leUsername->text());
+}
+
+QString OwncloudHttpCredsPage::getPassword() const
+{
+    return (_ui.lePassword->text());
+}
+
 
 bool OwncloudHttpCredsPage::validatePage()
 {
@@ -151,7 +167,8 @@ void OwncloudHttpCredsPage::setErrorString(const QString& err)
 
 AbstractCredentials* OwncloudHttpCredsPage::getCredentials() const
 {
-    return new HttpCredentialsGui(_ui.leUsername->text(), _ui.lePassword->text(), _ocWizard->ownCloudCertificatePath, _ocWizard->ownCloudCertificatePasswd);
+   fprintf(stderr,qPrintable(_ui.lePassword->text()));
+   return new HttpCredentialsGui(_ui.leUsername->text(), _ui.lePassword->text(), _ocWizard->ownCloudCertificatePath, _ocWizard->ownCloudCertificatePasswd);
 }
 
 

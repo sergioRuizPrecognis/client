@@ -149,6 +149,7 @@ QString HttpCredentials::user() const
     return _user;
 }
 
+/* MODIFICACION ZYNCRO */
 QString HttpCredentials::password() const
 {
     return _password;

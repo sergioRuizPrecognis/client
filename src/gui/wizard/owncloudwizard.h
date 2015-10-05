@@ -50,6 +50,10 @@ public:
     void setAccount(AccountPtr account);
     AccountPtr account() const;
     void setOCUrl( const QString& );
+    /* MODIFICACIÓN ZYNCRO */
+    void httpCredentials( const QString& );
+    QString getUser() const;
+    QString getPassword() const;
 
     void setupCustomMedia( QVariant, QLabel* );
     QString ocUrl() const;

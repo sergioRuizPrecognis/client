@@ -45,7 +45,6 @@ QString DummyCredentials::password() const
     return _password;
 }
 
-
 QNetworkAccessManager* DummyCredentials::getQNAM() const
 {
     return new AccessManager;

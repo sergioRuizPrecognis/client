@@ -19,8 +19,7 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 /* MODIFICACION ZYNCRO */
-#include <QNetworkAccessManager>
-#include <QtNetwork>
+#include <QDebug>
 
 #include "wizard/owncloudwizardcommon.h"
 #include "wizard/owncloudwizard.h"
@@ -188,48 +187,62 @@ void OwncloudSetupWizard::slotNoOwnCloudFoundAuthTimeout(const QUrl&url)
 
 void OwncloudSetupWizard::slotConnectToOCUrl( const QString& url )
 {
-    qDebug() << "Connect to url: " << url;
-    AbstractCredentials *creds = _ocWizard->getCredentials();
-    _ocWizard->account()->setCredentials(creds);
-    _ocWizard->setField(QLatin1String("OCUrl"), url );
-    _ocWizard->appendToConfigurationLog(tr("Trying to connect to %1 at %2...")
-                                        .arg( Theme::instance()->appNameGUI() ).arg(url) );
+    _ocWizard->account()->setUrl(url);
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url_net(_ocWizard->account()->urlLogin());
+    QNetworkRequest request(url_net);
 
-    testOwnCloudConnect();
+    // Set auth as owncloud Admin
+    QString concatenated = "zyncro:zyncro";
+    QByteArray data = concatenated.toLocal8Bit().toBase64();
+    QString headerData("Basic " + data);
+
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("Authorization", headerData.toLocal8Bit());
+
+    QUrl params;
+    params.addQueryItem("user", _ocWizard->getUser());
+    params.addQueryItem("password", _ocWizard->getPassword());
+    connect(manager, SIGNAL( finished(QNetworkReply*) ), this, SLOT(slotFinishedReply(QNetworkReply*)));
+    manager->post(request, params.encodedQuery());
+
 }
 
 void OwncloudSetupWizard::testOwnCloudConnect()
 {
+
     AccountPtr account = _ocWizard->account();
     auto *job = new PropfindJob(account, "/", this);
-
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url(account->urlLogin());
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    QUrl params;
-    QString user3 = account->credentials()->password();
-
-    fprintf(stderr,qPrintable(user3));
-
-    params.addQueryItem("user", account->credentials()->user());
-    params.addQueryItem("password", account->credentials()->password());
-
-    connect(manager, SIGNAL( finished(QNetworkReply*) ), this, SLOT(slotFinishedReply(QNetworkReply*)));
-    manager->post(request, params.encodedQuery());
 
     job->setIgnoreCredentialFailure(true);
     job->setProperties(QList<QByteArray>() << "getlastmodified");
     connect(job, SIGNAL(result(QVariantMap)), _ocWizard, SLOT(successfulStep()));
     connect(job, SIGNAL(finishedWithError()), this, SLOT(slotAuthError()));
     job->start();
+
 }
 
 void OwncloudSetupWizard::slotFinishedReply(QNetworkReply* reply)
 {
     QByteArray bts = reply->readAll();
     QString str(bts);
-    fprintf(stderr,qPrintable(str));
+
+    if (!str.contains("error")){
+        _ocWizard->httpCredentials(str);
+    }
+
+    fprintf(stderr,qPrintable(_ocWizard->getUser()));
+    fprintf(stderr,qPrintable(_ocWizard->getPassword()));
+
+    QString url = _ocWizard->account()->url().toString();
+    qDebug() << "Connect to url: " << url;
+        AbstractCredentials *creds = _ocWizard->getCredentials();
+    _ocWizard->account()->setCredentials(creds);
+    _ocWizard->setField(QLatin1String("OCUrl"), url );
+    _ocWizard->appendToConfigurationLog(tr("Trying to connect to %1 at %2...")
+                                        .arg( Theme::instance()->appNameGUI() ).arg(url) );
+
+    testOwnCloudConnect();
 }
 
 void OwncloudSetupWizard::slotAuthError()

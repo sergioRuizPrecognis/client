@@ -93,6 +93,22 @@ AccountPtr OwncloudWizard::account() const
     return _account;
 }
 
+void  OwncloudWizard::httpCredentials(const QString& pass)
+{
+    _httpCredsPage->newPasswordOC(pass);
+}
+
+QString  OwncloudWizard::getUser() const
+{
+     return(_httpCredsPage->getUser());
+}
+
+QString  OwncloudWizard::getPassword() const
+{
+     return(_httpCredsPage->getPassword());
+}
+
+
 QString OwncloudWizard::localFolder() const
 {
     return(_advancedSetupPage->localFolder());

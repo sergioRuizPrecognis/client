@@ -48,7 +48,9 @@ public:
     bool stillValid(QNetworkReply *reply) Q_DECL_OVERRIDE;
     void persist() Q_DECL_OVERRIDE;
     QString user() const Q_DECL_OVERRIDE;
+    /* MODIFICACION ZYNCRO */
     QString password() const;
+
     void invalidateToken() Q_DECL_OVERRIDE;
     QString fetchUser();
     virtual bool sslIsTrusted() { return false; }
